@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { readdirSync, unlinkSync, existsSync, mkdirSync } = require("fs");
+const { unlinkSync, existsSync, mkdirSync } = require("fs");
 const mysqldump = require("mysqldump");
 const axios = require("axios");
 const s3FolderUpload = require("s3-folder-upload");
@@ -13,39 +13,24 @@ if (!existsSync(folderBkp)) {
   mkdirSync(folderBkp);
 }
 
-const bkp = readdirSync(folderBkp);
-
-const credentials = {
-  accessKeyId: process.env.accessKeyId,
-  secretAccessKey: process.env.secretAccessKey,
-  region: process.env.region,
-  bucket: process.env.bucket,
-};
-
-const options = {
-  useFoldersForFileTypes: false,
-  useIAMRoleCredentials: false,
-};
-
-const nameUnique = moment().format("DDMMYYYY_hhmm");
-
-const Telegram = axios.create({
-  baseURL: `https://api.telegram.org/bot${process.env.telegramApiKey}/`,
-});
-
 async function sendTelegram(msg) {
-  await Telegram.post("SendMessage", {
-    text: `${process.env.cliente} ${msg}`,
-    chat_id: process.env.chatId,
-    parse_mode: "html",
-  })
+  await axios
+    .post(
+      `https://api.telegram.org/bot${process.env.telegramApiKey}/SendMessage`,
+      {
+        text: `${process.env.cliente} ${msg}`,
+        chat_id: process.env.chatId,
+        parse_mode: "html",
+      }
+    )
     .then((res) => {})
     .catch((err) => {
       console.log(err);
     });
 }
 
-async function dump() {
+(async function dump() {
+  const nameUnique = moment().format("DDMMYYYY_hhmm");
   const nameDump = `${folderBkp}/${process.env.database}-${nameUnique}.sql.gz`;
   await mysqldump({
     connection: {
@@ -58,15 +43,37 @@ async function dump() {
     compressFile: true,
   }).then((res) => {
     const upload = new Promise((resolve, reject) => {
-      resolve(s3FolderUpload(folderBkp, credentials, options));
-    });
-    upload.then((res) => {
-      unlinkSync(nameDump);
-      if (process.env.sendTelegram === "S") {
-        sendTelegram(`DUMP no s3 ${process.env.database}-${nameUnique}.sql.gz`);
-      }
-    });
+      resolve(
+        s3FolderUpload(
+          folderBkp,
+          {
+            accessKeyId: process.env.accessKeyId,
+            secretAccessKey: process.env.secretAccessKey,
+            region: process.env.region,
+            bucket: process.env.bucket,
+          },
+          {
+            useFoldersForFileTypes: false,
+            useIAMRoleCredentials: false,
+          }
+        )
+      );
+    })
+      .then((res) => {
+        unlinkSync(nameDump);
+        if (process.env.sendTelegram === "S") {
+          sendTelegram(
+            `DUMP no s3 ${process.env.database}-${nameUnique}.sql.gz`
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        if (process.env.sendTelegram === "S") {
+          sendTelegram(
+            `Erro no dump do cliente ${process.env.cliente} - ${err}`
+          );
+        }
+      });
   });
-}
-
-dump();
+})();
