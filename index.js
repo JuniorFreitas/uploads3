@@ -47,7 +47,7 @@ if (bkp.length >= 1) {
     .then((res) => {
       bkp.forEach((file) => {
         unlinkSync(`${folderBkp}/${file}`);
-        if (process.env.telegramApiKey) {
+        if (process.env.sendTelegram === "S") {
           sendTelegram(`Arquivo enviado ${file}`);
         }
       });
