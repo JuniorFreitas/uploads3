@@ -19,7 +19,7 @@ const nameUnique = moment().format("DDMMYYYY_hhmm");
 const nameDump = `${folderBkp}/${process.env.database}-${nameUnique}.sql.gz`;
 
 exec(
-  `docker exec -t ${process.env.container_name} /usr/bin/mysqldump -u ${process.env.user} --password=${process.env.password} ${process.env.database} | gzip > ${nameDump}`,
+  `docker exec -t ${process.env.container_name} /usr/bin/mysqldump -u ${process.env.user} --password="${process.env.password}" ${process.env.database} | gzip > ${nameDump}`,
   (error, stdout, stderr) => {
     if (error) {
       console.log(`error: ${error.message}`);
