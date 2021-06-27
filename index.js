@@ -5,6 +5,21 @@ const axios = require("axios");
 const s3FolderUpload = require("s3-folder-upload");
 const moment = require("moment");
 
+const { exec } = require("child_process");
+
+exec("sh /var/www/shell/dockerbkp.sh", (error, stdout, stderr) => {
+  if (error) {
+    console.log(`error: ${error.message}`);
+    return;
+  }
+  if (stderr) {
+    console.log(`stderr: ${stderr}`);
+    return;
+  }
+  console.log(`stdout: ${stdout}`);
+});
+
+/* 
 const folderBkp = process.env.folderBkp
   ? process.env.folderBkp
   : __dirname + "/backup";
@@ -77,3 +92,4 @@ async function sendTelegram(msg) {
       });
   });
 })();
+ */
