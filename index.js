@@ -1,6 +1,23 @@
 require("dotenv").config();
+const axios = require("axios");
 const s3FolderUpload = require("s3-folder-upload");
 const { readdirSync, unlinkSync } = require("fs");
+
+const Telegram = axios.create({
+  baseURL: `https://api.telegram.org/bot${process.env.telegramApiKey}/`,
+});
+
+async function sendTelegram(msg) {
+  await Telegram.post("SendMessage", {
+    text: `${process.env.cliente} ${msg}`,
+    chat_id: process.env.chatId,
+    parse_mode: "html",
+  })
+    .then((res) => {})
+    .catch((err) => {
+      console.log(err);
+    });
+}
 
 const folderBkp = process.env.folderBkp
   ? process.env.folderBkp
@@ -30,7 +47,9 @@ if (bkp.length >= 1) {
     .then((res) => {
       bkp.forEach((file) => {
         unlinkSync(`${folderBkp}/${file}`);
-        console.log(`Arquivo removido ${file}`);
+        if (process.env.telegramApiKey) {
+          sendTelegram(`Arquivo enviado ${file}`);
+        }
       });
     });
 } else {
