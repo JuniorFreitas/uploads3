@@ -4,6 +4,7 @@ const mysqldump = require("mysqldump");
 const axios = require("axios");
 const s3FolderUpload = require("s3-folder-upload");
 const moment = require("moment");
+const tz = require("moment-timezone");
 
 const { exec } = require("child_process");
 
@@ -15,8 +16,24 @@ if (!existsSync(folderBkp)) {
   mkdirSync(folderBkp);
 }
 
-const nameUnique = moment().format("DDMMYYYY_hhmm");
+const nameUnique = moment().tz("America/Sao_Paulo").format("DDMMYYYY_HHmm");
 const nameDump = `${folderBkp}/${process.env.database}-${nameUnique}.sql.gz`;
+
+async function sendTelegram(msg) {
+  await axios
+    .post(
+      `https://api.telegram.org/bot${process.env.telegramApiKey}/SendMessage`,
+      {
+        text: `${process.env.cliente} ${msg}`,
+        chat_id: process.env.chatId,
+        parse_mode: "html",
+      }
+    )
+    .then((res) => {})
+    .catch((err) => {
+      console.log(err);
+    });
+}
 
 exec(
   `docker exec -t ${process.env.container_name} /usr/bin/mysqldump -u ${process.env.user} --password="${process.env.password}" ${process.env.database} | gzip > ${nameDump}`,
@@ -68,21 +85,6 @@ exec(
 /* 
 
 
-async function sendTelegram(msg) {
-  await axios
-    .post(
-      `https://api.telegram.org/bot${process.env.telegramApiKey}/SendMessage`,
-      {
-        text: `${process.env.cliente} ${msg}`,
-        chat_id: process.env.chatId,
-        parse_mode: "html",
-      }
-    )
-    .then((res) => {})
-    .catch((err) => {
-      console.log(err);
-    });
-}
 
 (async function dump() {
 
