@@ -6,6 +6,8 @@ const folderBkp = process.env.folderBkp
   ? process.env.folderBkp
   : __dirname + "/backups";
 
+const bkp = readdirSync(folderBkp);
+
 const credentials = {
   accessKeyId: process.env.accessKeyId,
   secretAccessKey: process.env.secretAccessKey,
@@ -17,8 +19,6 @@ const options = {
   useFoldersForFileTypes: false,
   useIAMRoleCredentials: false,
 };
-
-const bkp = readdirSync(folderBkp);
 
 if (bkp.length >= 1) {
   const upload = new Promise((resolve, reject) => {
