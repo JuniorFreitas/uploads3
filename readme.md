@@ -6,7 +6,6 @@ Faça a cópia do arquivo .env-example para .env
 
 ```bash
 $ cp .env-example .env
-$ mkdir backup
 ```
 
 Usando npm:
