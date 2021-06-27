@@ -4,8 +4,6 @@ const mysqldump = require("mysqldump");
 const axios = require("axios");
 const s3FolderUpload = require("s3-folder-upload");
 const moment = require("moment");
-const nameUnique = moment().format("DDMMYYYY_hhmm");
-const nameDump = `${folderBkp}/${process.env.database}-${nameUnique}.sql.gz`;
 
 const { exec } = require("child_process");
 
@@ -16,6 +14,9 @@ const folderBkp = process.env.folderBkp
 if (!existsSync(folderBkp)) {
   mkdirSync(folderBkp);
 }
+
+const nameUnique = moment().format("DDMMYYYY_hhmm");
+const nameDump = `${folderBkp}/${process.env.database}-${nameUnique}.sql.gz`;
 
 exec(
   `docker exec -t ${container_name} /usr/bin/mysqldump -u ${process.env.user} --password=${process.env.password} ${process.env.database} | gzip > ${nameDump}`,
